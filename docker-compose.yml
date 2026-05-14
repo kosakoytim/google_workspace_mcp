@@ -9,6 +9,8 @@ services:
       - store_creds:/app/store_creds:rw
     env_file:
       - .env
+    networks:
+      - mcp_net
 
   nginx:
     image: nginx:alpine
@@ -19,6 +21,11 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - gws_mcp
+    networks:
+      - mcp_net
 
 volumes:
   store_creds:
+
+networks:
+  mcp_net:
