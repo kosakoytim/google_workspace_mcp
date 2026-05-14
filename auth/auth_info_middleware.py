@@ -195,6 +195,39 @@ class AuthInfoMiddleware(Middleware):
                                 logger.warning(
                                     "No auth provider available to verify Google token"
                                 )
+                                # Fallback: validate ya29.* token directly against Google userinfo API
+                                try:
+                                    import httpx
+                                    resp = httpx.get(
+                                        "https://www.googleapis.com/oauth2/v3/userinfo",
+                                        headers={"Authorization": f"Bearer {token_str}"},
+                                        timeout=5.0,
+                                    )
+                                    if resp.status_code == 200:
+                                        user_email = resp.json().get("email")
+                                        if user_email:
+                                            await context.fastmcp_context.set_state(
+                                                "authenticated_user_email", user_email
+                                            )
+                                            await context.fastmcp_context.set_state(
+                                                "authenticated_via", "bearer_token"
+                                            )
+                                            await context.fastmcp_context.set_state(
+                                                "token_type", "google_oauth"
+                                            )
+                                            authenticated_user = user_email
+                                            auth_via = "bearer_token"
+                                            logger.info(
+                                                f"Legacy mode: verified Google token for {user_email}"
+                                            )
+                                    else:
+                                        logger.warning(
+                                            f"Legacy mode: Google userinfo rejected token (status {resp.status_code})"
+                                        )
+                                except Exception as e:
+                                    logger.error(
+                                        f"Legacy mode: error verifying Google token via userinfo: {e}"
+                                    )
 
                         else:
                             # Non-Google JWT tokens require verification
