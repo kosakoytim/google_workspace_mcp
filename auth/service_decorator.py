@@ -318,11 +318,25 @@ async def _authenticate_service(
         )
     else:
         logger.debug(f"[{tool_name}] Using legacy OAuth 2.0 flow")
+        # Security: require a verified bearer token. authenticated_user is set by
+        # the middleware only after validating the token against Google's userinfo API.
+        if not authenticated_user:
+            raise GoogleAuthenticationError(
+                f"Authentication required for {tool_name}. "
+                "A valid Google access token must be provided via Authorization header."
+            )
+        # If the AI passed a user_google_email, it must match the verified token email.
+        if user_google_email and user_google_email != authenticated_user:
+            raise GoogleAuthenticationError(
+                f"Authenticated account {authenticated_user} does not match "
+                f"requested user {user_google_email}."
+            )
+        # Always use the token-verified email, not the AI-supplied one.
         return await get_authenticated_google_service(
             service_name=service_name,
             version=service_version,
             tool_name=tool_name,
-            user_google_email=user_google_email,
+            user_google_email=authenticated_user,
             required_scopes=resolved_scopes,
             session_id=mcp_session_id,
         )
