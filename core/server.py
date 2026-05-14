@@ -201,6 +201,8 @@ def _ensure_legacy_callback_route() -> None:
     if _legacy_callback_registered:
         return
     server.custom_route("/oauth2callback", methods=["GET"])(legacy_oauth2_callback)
+    from auth.inject_credential import inject_credential
+    server.custom_route("/inject-credential", methods=["POST"])(inject_credential)
     _legacy_callback_registered = True
 
 
