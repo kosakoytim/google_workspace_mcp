@@ -4,6 +4,7 @@ services:
     container_name: gws_mcp
     environment:
       - GOOGLE_MCP_CREDENTIALS_DIR=/app/store_creds
+      - TOOL_TIER=complete
     volumes:
       - ./client_secret.json:/app/client_secret.json:ro
       - store_creds:/app/store_creds:rw
