@@ -10,6 +10,25 @@ services:
       - store_creds:/app/store_creds:rw
     env_file:
       - .env
+    mem_limit: 512m
+    memswap_limit: 512m
+    restart: unless-stopped
+    networks:
+      - mcp_net
+
+  scheduler:
+    image: alpine:latest
+    container_name: gws_mcp_scheduler
+    entrypoint: /bin/sh -c
+    command: >
+      "apk add --no-cache docker-cli &&
+      echo '0 3 * * * docker restart gws_mcp' | crontab - &&
+      crond -f"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - gws_mcp
+    restart: unless-stopped
     networks:
       - mcp_net
 
